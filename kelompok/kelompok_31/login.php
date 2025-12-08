@@ -55,11 +55,49 @@ if (isset($_SESSION['user_id'])) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/main.js"></script>
     <script>
-        // TODO Anggota 1: Implementasi AJAX login di sini
+        // AJAX Login Implementation
         $('#loginForm').on('submit', function(e) {
             e.preventDefault();
-            // Implementasi AJAX ke api/auth/login.php
-            alert('TODO: Implementasi AJAX login');
+            
+            // Get form data
+            const username = $('#username').val().trim();
+            const password = $('#password').val();
+            
+            // Hide previous error message
+            $('#errorMessage').addClass('d-none').text('');
+            
+            // Disable submit button and show loading
+            const $submitBtn = $(this).find('button[type="submit"]');
+            const originalText = $submitBtn.html();
+            $submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Memproses...');
+            
+            // AJAX request
+            $.ajax({
+                url: 'api/auth/login.php',
+                method: 'POST',
+                data: {
+                    username: username,
+                    password: password
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Login berhasil, redirect ke dashboard sesuai role
+                        const role = response.role;
+                        window.location.href = 'dashboard/' + role + '.php';
+                    } else {
+                        // Login gagal, tampilkan error
+                        $('#errorMessage').removeClass('d-none').text(response.message || 'Login gagal');
+                        $submitBtn.prop('disabled', false).html(originalText);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Handle AJAX error
+                    console.error('Login Error:', error);
+                    $('#errorMessage').removeClass('d-none').text('Terjadi kesalahan. Silakan coba lagi.');
+                    $submitBtn.prop('disabled', false).html(originalText);
+                }
+            });
         });
     </script>
 </body>

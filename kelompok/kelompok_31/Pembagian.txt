@@ -1,0 +1,30 @@
+# File untuk Anggota 1 (Anda sendiri)
+echo "<?php // Login page - Anggota 1 ?>" > login.php
+echo "<?php // Logout handler - Anggota 1 ?>" > logout.php
+echo "<?php // Database config - Anggota 1 ?>" > config/database.php
+echo "<?php // Login API - Anggota 1 ?>" > api/auth/login.php
+
+# File untuk Anggota 2
+echo "<?php // Header template - Anggota 2 ?>" > components/header.php
+echo "<?php // Navbar template - Anggota 2 ?>" > components/navbar.php
+echo "<?php // Footer template - Anggota 2 ?>" > components/footer.php
+echo "<?php // Admin dashboard - Anggota 2 ?>" > dashboard/admin.php
+echo "<?php // Dosen dashboard - Anggota 2 ?>" > dashboard/dosen.php
+echo "<?php // Mahasiswa dashboard - Anggota 2 ?>" > dashboard/mahasiswa.php
+echo "<?php // CRUD mata kuliah - Anggota 2 ?>" > admin/mata_kuliah.php
+echo "<?php // API CRUD mata kuliah - Anggota 2 ?>" > api/mata_kuliah_crud.php
+
+# File untuk Anggota 3
+echo "<?php // Upload materi - Anggota 3 ?>" > dosen/upload_materi.php
+echo "<?php // Buat tugas - Anggota 3 ?>" > dosen/buat_tugas.php
+echo "<?php // Daftar materi - Anggota 3 ?>" > mahasiswa/materi.php
+echo "<?php // Daftar tugas - Anggota 3 ?>" > mahasiswa/tugas.php
+echo "<?php // API upload materi - Anggota 3 ?>" > api/upload_materi.php
+echo "<?php // API submit tugas - Anggota 3 ?>" > api/submit_tugas.php
+
+# File untuk Anggota 4
+echo "<?php // Input nilai - Anggota 4 ?>" > dosen/input_nilai.php
+echo "<?php // Daftar nilai - Anggota 4 ?>" > mahasiswa/nilai.php
+echo "<?php // CRUD pengumuman - Anggota 4 ?>" > admin/pengumuman.php
+echo "<?php // REST API - Anggota 4 ?>" > webservice/api.php
+echo "<?php // Consume API - Anggota 4 ?>" > webservice/consume.php

@@ -46,11 +46,14 @@ if (empty($username) || empty($password)) {
 }
 
 // Koneksi database
-require_once '../../config/database.php';
-$database = new Database();
-$conn = $database->getConnection();
-
-if (!$conn) {
+try {
+    $pdo = new PDO(
+        'mysql:host=localhost;dbname=eduportal;charset=utf8mb4',
+        'root',
+        '',
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+} catch (PDOException $e) {
     echo json_encode([
         'success' => false,
         'message' => 'Koneksi database gagal'
@@ -60,9 +63,9 @@ if (!$conn) {
 
 // Query user dari database
 try {
-    $stmt = $database->prepare("SELECT id, username, password, nama, role FROM users WHERE username = ?");
+    $stmt = $pdo->prepare("SELECT id, username, password, nama, role FROM users WHERE username = ?");
     $stmt->execute([$username]);
-    $user = $stmt->fetch();
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && password_verify($password, $user['password'])) {
         // Login berhasil, set session

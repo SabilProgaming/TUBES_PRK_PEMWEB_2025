@@ -73,5 +73,19 @@ class Database {
         }
     }
 }
+// --- INISIALISASI UNTUK API ---
+$database = new Database();
+$pdo = $database->getConnection();
+
+// Cek koneksi
+if ($pdo === null) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'status' => 'error', 
+        'message' => 'Koneksi Gagal ke eduportal_local. Pastikan database ada di phpMyAdmin.'
+    ]);
+    exit();
+}
+
 ?>
 

@@ -2,6 +2,7 @@
 /**
  * Dashboard Mahasiswa
  * Dikerjakan oleh: Anggota 2
+ * Updated oleh: Anggota 4 (Widget Pengumuman)
  * 
  * Dashboard mahasiswa menampilkan statistik akademik dan akses ke materi, tugas, dan nilai
  */
@@ -12,6 +13,62 @@ session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'mahasiswa') {
     header("Location: ../login.php");
     exit();
+}
+
+// Koneksi database untuk pengumuman
+require_once '../config/database.php';
+$database = new Database();
+$pdo = $database->getConnection();
+
+// Get pengumuman terbaru
+$pengumuman_list = [];
+if ($pdo) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT p.*, u.nama as author_name 
+            FROM pengumuman p
+            JOIN users u ON p.created_by = u.id
+            ORDER BY p.created_at DESC
+            LIMIT 5
+        ");
+        $stmt->execute();
+        $pengumuman_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error loading pengumuman: " . $e->getMessage());
+    }
+}
+
+// Get statistik tugas dan nilai
+$statistik = [
+    'total_tugas' => 0,
+    'tugas_dinilai' => 0,
+    'tugas_belum_dinilai' => 0,
+    'rata_rata_nilai' => 0
+];
+
+if ($pdo) {
+    try {
+        // Total tugas yang sudah di-submit
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) as total,
+                   SUM(CASE WHEN nilai IS NOT NULL THEN 1 ELSE 0 END) as dinilai,
+                   SUM(CASE WHEN nilai IS NULL THEN 1 ELSE 0 END) as belum_dinilai,
+                   AVG(nilai) as rata_rata
+            FROM submission
+            WHERE mahasiswa_id = ?
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+        $stat = $stmt->fetch();
+        
+        if ($stat) {
+            $statistik['total_tugas'] = intval($stat['total']);
+            $statistik['tugas_dinilai'] = intval($stat['dinilai']);
+            $statistik['tugas_belum_dinilai'] = intval($stat['belum_dinilai']);
+            $statistik['rata_rata_nilai'] = $stat['rata_rata'] ? number_format($stat['rata_rata'], 2) : '0.00';
+        }
+    } catch (PDOException $e) {
+        error_log("Error loading statistik: " . $e->getMessage());
+    }
 }
 
 $page_title = "Dashboard Mahasiswa";
@@ -279,6 +336,49 @@ $last_updated = date('d M Y, H:i') . ' WIB';
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pengumuman Terbaru -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bullhorn me-2"></i>Pengumuman Terbaru
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (empty($pengumuman_list)): ?>
+                        <div class="text-center py-5">
+                            <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">Belum ada pengumuman</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($pengumuman_list as $pengumuman): 
+                                $created_date = date('d M Y, H:i', strtotime($pengumuman['created_at']));
+                                $excerpt = strlen($pengumuman['isi']) > 150 ? substr($pengumuman['isi'], 0, 150) . '...' : $pengumuman['isi'];
+                            ?>
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 fw-bold"><?php echo htmlspecialchars($pengumuman['judul']); ?></h6>
+                                            <p class="mb-2 text-muted small"><?php echo htmlspecialchars($excerpt); ?></p>
+                                            <small class="text-muted">
+                                                <i class="fas fa-user me-1"></i><?php echo htmlspecialchars($pengumuman['author_name']); ?>
+                                                <span class="ms-2">
+                                                    <i class="fas fa-calendar me-1"></i><?php echo $created_date; ?>
+                                                </span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

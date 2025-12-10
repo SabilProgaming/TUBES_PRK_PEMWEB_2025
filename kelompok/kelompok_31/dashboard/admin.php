@@ -18,6 +18,29 @@ $page_title = "Dashboard Admin";
 include '../components/header.php';
 include '../components/navbar.php';
 
+// Koneksi database untuk pengumuman
+require_once '../config/database.php';
+$database = new Database();
+$pdo = $database->getConnection();
+
+// Get pengumuman terbaru
+$pengumuman_list = [];
+if ($pdo) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT p.*, u.nama as author_name 
+            FROM pengumuman p
+            JOIN users u ON p.created_by = u.id
+            ORDER BY p.created_at DESC
+            LIMIT 5
+        ");
+        $stmt->execute();
+        $pengumuman_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error loading pengumuman: " . $e->getMessage());
+    }
+}
+
 // Data dummy untuk statistik (akan diganti dengan data real nanti)
 $total_mahasiswa = 5261;
 $mahasiswa_aktif = 3802;
@@ -205,7 +228,7 @@ $last_updated = date('d M Y, H:i') . ' WIB';
     </div>
 
     <!-- Quick Actions -->
-    <div class="row g-4">
+    <div class="row g-4 mb-4">
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
@@ -236,6 +259,55 @@ $last_updated = date('d M Y, H:i') . ' WIB';
                             </button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pengumuman Terbaru -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bullhorn me-2"></i>Pengumuman Terbaru
+                    </h5>
+                    <a href="admin/pengumuman.php" class="btn btn-light btn-sm">
+                        <i class="fas fa-eye me-1"></i>Lihat Semua
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (empty($pengumuman_list)): ?>
+                        <div class="text-center py-5">
+                            <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">Belum ada pengumuman</p>
+                            <a href="admin/pengumuman.php" class="btn btn-info btn-sm mt-3">
+                                <i class="fas fa-plus me-1"></i>Buat Pengumuman Pertama
+                            </a>
+                        </div>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($pengumuman_list as $pengumuman): 
+                                $created_date = date('d M Y, H:i', strtotime($pengumuman['created_at']));
+                                $excerpt = strlen($pengumuman['isi']) > 150 ? substr($pengumuman['isi'], 0, 150) . '...' : $pengumuman['isi'];
+                            ?>
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 fw-bold"><?php echo htmlspecialchars($pengumuman['judul']); ?></h6>
+                                            <p class="mb-2 text-muted small"><?php echo htmlspecialchars($excerpt); ?></p>
+                                            <small class="text-muted">
+                                                <i class="fas fa-user me-1"></i><?php echo htmlspecialchars($pengumuman['author_name']); ?>
+                                                <span class="ms-2">
+                                                    <i class="fas fa-calendar me-1"></i><?php echo $created_date; ?>
+                                                </span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

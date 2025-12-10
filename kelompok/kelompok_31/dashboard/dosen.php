@@ -18,54 +18,12 @@ $page_title = "Dashboard Dosen";
 include '../components/header.php';
 include '../components/navbar.php';
 
-// Koneksi database
-try {
-    $pdo = new PDO(
-        'mysql:host=localhost;dbname=eduportal;charset=utf8mb4',
-        'root',
-        '',
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
-} catch (PDOException $e) {
-    die('Error: Koneksi database gagal');
-}
-
-// Query statistik dari database
-try {
-    // Total mata kuliah diampu oleh dosen ini
-    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM mata_kuliah WHERE dosen_id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $total_mata_kuliah = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    
-    // Total mahasiswa (anggap semua mahasiswa di mata kuliah yang diampu)
-    // TODO: Buat tabel enrollment jika diperlukan untuk tracking lebih detail
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM users WHERE role = 'mahasiswa'");
-    $total_mahasiswa = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    
-    // Total materi yang diupload
-    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM materi WHERE uploaded_by = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $total_materi_uploaded = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    
-    // Total tugas yang dibuat
-    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM tugas WHERE created_by = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $total_tugas_dibuat = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    
-    // Rata-rata nilai
-    $stmt = $pdo->query("SELECT AVG(nilai) as rata FROM submission WHERE nilai IS NOT NULL");
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    $rata_nilai = $result['rata'] ? round($result['rata'], 2) : 0;
-    
-} catch (PDOException $e) {
-    $total_mata_kuliah = 0;
-    $total_mahasiswa = 0;
-    $total_materi_uploaded = 0;
-    $total_tugas_dibuat = 0;
-    $rata_nilai = 0;
-}
-
-// Data untuk lainnya
+// Data dummy untuk statistik dosen (akan diganti dengan data real nanti)
+$total_mata_kuliah = 4;
+$total_mahasiswa = 142;
+$total_materi_uploaded = 23;
+$total_tugas_dibuat = 8;
+$rata_nilai = 78.5;
 $kehadiran_rata = 85;
 $submission_rate = 92;
 $last_updated = date('d M Y, H:i') . ' WIB';

@@ -18,42 +18,13 @@ $page_title = "Dashboard Admin";
 include '../components/header.php';
 include '../components/navbar.php';
 
-// Koneksi database
-try {
-    $pdo = new PDO(
-        'mysql:host=localhost;dbname=eduportal;charset=utf8mb4',
-        'root',
-        '',
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
-} catch (PDOException $e) {
-    die('Error: Koneksi database gagal');
-}
-
-// Query statistik dari database
-try {
-    // Total mata kuliah
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM mata_kuliah");
-    $total_mata_kuliah = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    
-    // Total dosen
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM users WHERE role = 'dosen'");
-    $total_dosen = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    
-    // Total mahasiswa
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM users WHERE role = 'mahasiswa'");
-    $total_mahasiswa = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    
-} catch (PDOException $e) {
-    $total_mata_kuliah = 0;
-    $total_dosen = 0;
-    $total_mahasiswa = 0;
-}
-
-// Data dummy untuk statistik lainnya (bisa dikembangkan nanti)
-$mahasiswa_aktif = $total_mahasiswa;
-$mahasiswa_nonaktif = 0;
-$mahasiswa_cuti = 0;
+// Data dummy untuk statistik (akan diganti dengan data real nanti)
+$total_mahasiswa = 5261;
+$mahasiswa_aktif = 3802;
+$mahasiswa_nonaktif = 1287;
+$mahasiswa_cuti = 82;
+$total_mata_kuliah = 45;
+$total_dosen = 28;
 $kehadiran_persen = 89;
 $pelaporan_persen = 88;
 $last_updated = date('d M Y, H:i') . ' WIB';
@@ -133,27 +104,20 @@ $last_updated = date('d M Y, H:i') . ' WIB';
         </div>
 
         <!-- Card Mata Kuliah -->
-<div class="col-lg-3">
-    <div class="card shadow-sm h-100 border-primary">
-        <div class="card-body text-center">
-            <div class="mb-3">
-                <i class="fas fa-book fa-3x text-primary"></i>
+        <div class="col-lg-3">
+            <div class="card shadow-sm h-100 border-primary">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-book fa-3x text-primary"></i>
+                    </div>
+                    <h2 class="text-primary mb-1"><?php echo $total_mata_kuliah; ?></h2>
+                    <p class="text-muted mb-3">Mata Kuliah</p>
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-list me-1"></i>Lihat Semua
+                    </button>
+                </div>
             </div>
-
-            <h2 class="text-primary mb-1">
-                <?php echo $total_mata_kuliah; ?>
-            </h2>
-
-            <p class="text-muted mb-3">Mata Kuliah</p>
-
-            <!-- Tombol menuju halaman mata kuliah -->
-            <a href="../admin/mata_kuliah.php" class="btn btn-outline-primary btn-sm">
-                <i class="fas fa-list me-1"></i> Lihat Semua
-            </a>
         </div>
-    </div>
-</div>
-
 
         <!-- Card Dosen -->
         <div class="col-lg-3">
@@ -252,10 +216,9 @@ $last_updated = date('d M Y, H:i') . ' WIB';
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-3">
-<a href="../admin/mata_kuliah.php" class="btn btn-outline-primary w-100">
-    <i class="fas fa-book me-2"></i>Kelola Mata Kuliah
-</a>
-
+                            <a href="admin/mata_kuliah.php" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-book me-2"></i>Kelola Mata Kuliah
+                            </a>
                         </div>
                         <div class="col-md-3">
                             <a href="admin/pengumuman.php" class="btn btn-outline-info w-100">

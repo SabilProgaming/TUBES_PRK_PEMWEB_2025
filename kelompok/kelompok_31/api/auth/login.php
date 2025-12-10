@@ -1,8 +1,19 @@
 <?php
+/**
+ * API Login
+ * Dikerjakan oleh: Anggota 1 (Ketua)
+ * 
+ * Handle login request via AJAX
+ * - Terima username & password dari POST
+ * - Validasi credentials dengan database
+ * - Set session jika valid
+ * - Return JSON response
+ */
+
 session_start();
 header("Content-Type: application/json");
 
-// Jika sudah login
+// Cek jika sudah login
 if (isset($_SESSION['user_id'])) {
     echo json_encode([
         'success' => true,
@@ -12,7 +23,7 @@ if (isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Method harus POST
+// Cek method request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
         'success' => false,
@@ -50,15 +61,14 @@ try {
     exit();
 }
 
+// Query user dari database
 try {
-    // Query ke database
     $stmt = $pdo->prepare("SELECT id, username, password, nama, role FROM users WHERE username = ?");
     $stmt->execute([$username]);
-
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && password_verify($password, $user['password'])) {
-        // Set session
+        // Login berhasil, set session
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['nama'] = $user['nama'];
@@ -71,19 +81,17 @@ try {
             'nama' => $user['nama']
         ]);
     } else {
+        // Login gagal
         echo json_encode([
             'success' => false,
             'message' => 'Username atau password salah'
         ]);
     }
-
-} catch (PDOException $e) {
+} catch(PDOException $e) {
     error_log("Login Error: " . $e->getMessage());
-    error_log("Database Error Details: " . $e->getCode());
     echo json_encode([
         'success' => false,
-        'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
+        'message' => 'Terjadi kesalahan sistem'
     ]);
 }
-
 ?>

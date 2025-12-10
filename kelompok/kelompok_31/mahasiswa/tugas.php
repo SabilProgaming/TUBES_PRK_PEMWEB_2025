@@ -1,5 +1,14 @@
 <?php
+/**
+ * Daftar Tugas Mahasiswa
+ * Dikerjakan oleh: Anggota 3
+ */
 session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'mahasiswa') {
+    header("Location: ../login.php");
+    exit();
+}
+
 $page_title = "Daftar Tugas";
 include '../components/header.php';
 include '../components/navbar.php';
@@ -73,7 +82,7 @@ include '../components/navbar.php';
                     <thead class="table-light">
                         <tr>
                             <th class="ps-4">Mata Kuliah</th>
-                            <th>Detail</th>
+                            <th>Detail Tugas</th>
                             <th>Deadline</th>
                             <th>Status</th>
                             <th class="text-end pe-4">Aksi</th>
@@ -112,30 +121,78 @@ include '../components/navbar.php';
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    if (isNaN(date)) {
+        const parts = dateString.split(/[- :]/);
+        if (parts.length >= 6) {
+             const safeDate = new Date(parts[0], parts[1] - 1, parts[2], parts[3], parts[4], parts[5]);
+             if (!isNaN(safeDate)) return safeDate.toLocaleString('id-ID');
+        }
+        return 'Tanggal tidak valid'; 
+    }
+    return date.toLocaleString('id-ID'); 
+}
+
 function loadTugas() {
     fetch('../api/submit_tugas.php?t='+Date.now()).then(r=>r.json()).then(res => {
+        if (res.status !== 'success') {
+            document.querySelector('#tbodyTugas').innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">Gagal memuat data: ${res.message}</td></tr>`;
+            return;
+        }
+
         let total = res.data.length, done = res.data.filter(i => i.status_kumpul === 'submitted').length;
-        document.getElementById('statTotal').innerText = total; document.getElementById('statDone').innerText = done; document.getElementById('statPending').innerText = total - done;
+        document.getElementById('statTotal').innerText = total; 
+        document.getElementById('statDone').innerText = done; 
+        document.getElementById('statPending').innerText = total - done;
 
         let h = '';
-        res.data.forEach(i => {
-            let status = `<span class="badge bg-warning text-dark">Pending</span>`, btn = `<button onclick="bukaModal(${i.id})" class="btn btn-primary btn-sm px-3">Upload</button>`;
-            if(i.status_kumpul == 'submitted') { status = `<span class="badge bg-success">Terkirim</span>`; btn = `<button onclick="bukaModal(${i.id})" class="btn btn-outline-success btn-sm px-3">Update</button>`; }
-            
-            h += `<tr>
-                <td class="ps-4 fw-bold text-dark">${i.nama_mk}</td>
-                <td><div class="fw-bold text-dark">${i.judul}</div><small class="text-muted">${i.deskripsi}</small></td>
-                <td><span class="text-danger small fw-bold">${i.deadline.replace('T', ' ')}</span></td>
-                <td>${status}</td>
-                <td class="text-end pe-4">${btn}</td>
-            </tr>`;
-        });
+        if (total === 0) {
+             h = '<tr><td colspan="5" class="text-center py-4 text-muted">Belum ada tugas aktif.</td></tr>';
+        } else {
+            res.data.forEach(i => {
+                let status = `<span class="badge bg-warning text-dark">Pending</span>`;
+                let btn = `<button onclick="bukaModal(${i.id})" class="btn btn-primary btn-sm px-3">Upload</button>`;
+                
+                if(i.status_kumpul == 'submitted') { 
+                    status = `<span class="badge bg-success">Terkirim</span>`; 
+                    btn = `<button onclick="bukaModal(${i.id})" class="btn btn-outline-success btn-sm px-3">Update</button>`; 
+                }
+                
+                let deadlineFix = formatDateTime(i.deadline);
+
+                h += `<tr>
+                    <td class="ps-4">
+                         <span class="badge bg-info text-dark">${i.nama_mk}</span>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark">${i.judul}</div>
+                        <small class="text-muted"><i class="fas fa-user-circle me-1"></i> ${i.nama_dosen || 'Dosen'}</small>
+                    </td>
+                    <td><span class="text-danger small fw-bold">${deadlineFix}</span></td>
+                    <td>${status}</td>
+                    <td class="text-end pe-4">${btn}</td>
+                </tr>`;
+            });
+        }
         document.querySelector('#tbodyTugas').innerHTML = h;
+    }).catch(err => {
+         document.querySelector('#tbodyTugas').innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">Gagal koneksi ke server.</td></tr>`;
     });
 }
 function bukaModal(id){ document.getElementById('tugasId').value=id; new bootstrap.Modal(document.getElementById('modalSubmit')).show(); }
 document.getElementById('formSubmitTugas').addEventListener('submit', function(e){
-    e.preventDefault(); fetch('../api/submit_tugas.php', {method:'POST', body:new FormData(this)}).then(r=>r.json()).then(d=>{ Swal.fire('Sukses',d.message,'success'); loadTugas(); });
+    e.preventDefault(); 
+    Swal.fire({title: 'Mengirim...', didOpen:()=>{Swal.showLoading()}});
+    fetch('../api/submit_tugas.php', {method:'POST', body:new FormData(this)}).then(r=>r.json()).then(d=>{ 
+        if(d.status === 'success') {
+            Swal.fire('Sukses', d.message, 'success'); 
+            bootstrap.Modal.getInstance(document.getElementById('modalSubmit')).hide();
+            loadTugas(); 
+        } else {
+             Swal.fire('Gagal', d.message || 'Terjadi kesalahan.', 'error');
+        }
+    });
 });
 loadTugas();
 </script>

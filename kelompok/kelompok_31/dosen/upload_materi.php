@@ -1,8 +1,22 @@
 <?php
+/**
+ * Upload Materi
+ * Dikerjakan oleh: Anggota 3
+ */
 session_start();
 $page_title = "Bank Materi";
 include '../components/header.php';
 include '../components/navbar.php';
+require_once '../config/database.php';
+
+$dosen_id = $_SESSION['user_id'];
+try {
+    $stmt = $pdo->prepare("SELECT * FROM mata_kuliah WHERE dosen_id = ? ORDER BY nama ASC");
+    $stmt->execute([$dosen_id]);
+    $mata_kuliah = $stmt->fetchAll();
+} catch (PDOException $e) {
+    $mata_kuliah = [];
+}
 ?>
 
 <div class="dashboard-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 2rem 0;">
@@ -30,9 +44,13 @@ include '../components/navbar.php';
                     <form id="formUpload">
                         <div class="mb-3">
                             <label class="form-label">Mata Kuliah</label>
-                            <select class="form-select" name="mata_kuliah_id">
-                                <option value="1">IF101 - Pemrograman Web</option>
-                                <option value="2">IF102 - Basis Data</option>
+                            <select class="form-select" name="mata_kuliah_id" required>
+                            <option value="">-- Pilih Mata Kuliah --</option>
+                            <?php foreach($mata_kuliah as $mk): ?>
+                            <option value="<?= $mk['id'] ?>">
+                            <?= $mk['kode'] . ' - ' . $mk['nama'] ?>
+                            </option>
+                            <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="mb-3">

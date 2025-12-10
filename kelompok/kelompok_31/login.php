@@ -24,73 +24,27 @@ if (isset($_SESSION['user_id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - EduPortal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome untuk icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/custom.css">
 </head>
 <body>
-    <div class="login-container">
-        <!-- Left Panel: Branding (Desktop Only) -->
-        <div class="login-left-panel d-none d-lg-flex">
-            <div class="branding-content">
-                <div class="branding-icon">
-                    <i class="fas fa-graduation-cap"></i>
-                </div>
-                <h1 class="branding-title">EduPortal</h1>
-                <p class="branding-welcome">Selamat Datang</p>
-                <p class="branding-tagline">Sistem Manajemen Pembelajaran Akademik</p>
-                <div class="decorative-shapes">
-                    <div class="shape shape-1"></div>
-                    <div class="shape shape-2"></div>
-                    <div class="shape shape-3"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Panel: Login Form -->
-        <div class="login-right-panel">
-            <div class="login-card-wrapper">
-                <div class="login-card">
-                    <div class="login-header">
-                        <h2 class="login-title">Login</h2>
-                        <p class="login-subtitle">Masuk ke akun Anda</p>
-                    </div>
-                    
-                    <form id="loginForm" class="login-form">
-                        <!-- Username Input -->
-                        <div class="form-group">
-                            <label for="username" class="form-label">Username</label>
-                            <div class="input-wrapper">
-                                <i class="fas fa-user input-icon"></i>
-                                <input type="text" class="form-control" id="username" placeholder="Masukkan username" required>
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="text-center mb-4">EduPortal Login</h3>
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" required>
                             </div>
-                        </div>
-
-                        <!-- Password Input -->
-                        <div class="form-group">
-                            <label for="password" class="form-label">Password</label>
-                            <div class="input-wrapper">
-                                <i class="fas fa-lock input-icon"></i>
-                                <input type="password" class="form-control" id="password" placeholder="Masukkan password" required>
-                                <button type="button" class="password-toggle" id="togglePassword">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" required>
                             </div>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <button type="submit" class="btn btn-login w-100">
-                            <span class="btn-text">Login</span>
-                            <span class="btn-loader d-none">
-                                <span class="spinner-border spinner-border-sm me-2"></span>Memproses...
-                            </span>
-                        </button>
-                    </form>
-
-                    <!-- Error Message -->
-                    <div id="errorMessage" class="alert alert-danger mt-3 d-none" role="alert">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        <span class="error-text"></span>
+                            <button type="submit" class="btn btn-primary w-100">Login</button>
+                        </form>
+                        <div id="errorMessage" class="alert alert-danger mt-3 d-none"></div>
                     </div>
                 </div>
             </div>
@@ -101,22 +55,6 @@ if (isset($_SESSION['user_id'])) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/main.js"></script>
     <script>
-        // Password Toggle Functionality
-        $(document).ready(function() {
-            $('#togglePassword').on('click', function() {
-                const $passwordInput = $('#password');
-                const $toggleIcon = $(this).find('i');
-                
-                if ($passwordInput.attr('type') === 'password') {
-                    $passwordInput.attr('type', 'text');
-                    $toggleIcon.removeClass('fa-eye').addClass('fa-eye-slash');
-                } else {
-                    $passwordInput.attr('type', 'password');
-                    $toggleIcon.removeClass('fa-eye-slash').addClass('fa-eye');
-                }
-            });
-        });
-
         // AJAX Login Implementation
         $('#loginForm').on('submit', function(e) {
             e.preventDefault();
@@ -126,16 +64,12 @@ if (isset($_SESSION['user_id'])) {
             const password = $('#password').val();
             
             // Hide previous error message
-            $('#errorMessage').addClass('d-none').slideUp();
-            $('#errorMessage').find('.error-text').text('');
+            $('#errorMessage').addClass('d-none').text('');
             
             // Disable submit button and show loading
             const $submitBtn = $(this).find('button[type="submit"]');
-            const $btnText = $submitBtn.find('.btn-text');
-            const $btnLoader = $submitBtn.find('.btn-loader');
-            $submitBtn.prop('disabled', true);
-            $btnText.addClass('d-none');
-            $btnLoader.removeClass('d-none');
+            const originalText = $submitBtn.html();
+            $submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Memproses...');
             
             // AJAX request
             $.ajax({
@@ -153,23 +87,15 @@ if (isset($_SESSION['user_id'])) {
                         window.location.href = 'dashboard/' + role + '.php';
                     } else {
                         // Login gagal, tampilkan error
-                        const $errorMsg = $('#errorMessage');
-                        $errorMsg.find('.error-text').text(response.message || 'Login gagal');
-                        $errorMsg.removeClass('d-none').slideDown();
-                        $submitBtn.prop('disabled', false);
-                        $btnText.removeClass('d-none');
-                        $btnLoader.addClass('d-none');
+                        $('#errorMessage').removeClass('d-none').text(response.message || 'Login gagal');
+                        $submitBtn.prop('disabled', false).html(originalText);
                     }
                 },
                 error: function(xhr, status, error) {
                     // Handle AJAX error
                     console.error('Login Error:', error);
-                    const $errorMsg = $('#errorMessage');
-                    $errorMsg.find('.error-text').text('Terjadi kesalahan. Silakan coba lagi.');
-                    $errorMsg.removeClass('d-none').slideDown();
-                    $submitBtn.prop('disabled', false);
-                    $btnText.removeClass('d-none');
-                    $btnLoader.addClass('d-none');
+                    $('#errorMessage').removeClass('d-none').text('Terjadi kesalahan. Silakan coba lagi.');
+                    $submitBtn.prop('disabled', false).html(originalText);
                 }
             });
         });

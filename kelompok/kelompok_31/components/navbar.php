@@ -5,6 +5,11 @@
  * 
  * Navbar dinamis sesuai role (Admin/Dosen/Mahasiswa)
  */
+// Pastikan session aktif sebelum membaca $_SESSION — beberapa file mungkin lupa session_start()
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
 $current_role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
 $current_nama = isset($_SESSION['nama']) ? $_SESSION['nama'] : 'User';
 $role_display = [
@@ -94,12 +99,18 @@ $role_title = isset($role_display[$current_role]) ? $role_display[$current_role]
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="../logout.php">
-                            <i class="fas fa-sign-out-alt me-2"></i>Logout
-                        </a></li>
+                        <li>
+                            <!-- Logout menggunakan POST agar tidak tergantung cache / GET -->
+                            <a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logoutForm').submit();">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a>
+                        </li>
                     </ul>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
+
+<!-- Form logout tersembunyi (dipicu oleh menu di atas) -->
+<form id="logoutForm" action="../logout.php" method="post" style="display:none;"></form>

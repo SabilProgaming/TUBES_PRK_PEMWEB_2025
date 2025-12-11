@@ -147,4 +147,61 @@ $(document).ready(function() {
     setTimeout(function() {
         $('.alert').fadeOut();
     }, 5000);
+    
+    // Initialize landing page animations
+    initLandingPageAnimations();
 });
+
+/**
+ * Landing Page Scroll Animations
+ * Menggunakan Intersection Observer API untuk trigger animasi saat scroll
+ */
+function initLandingPageAnimations() {
+    // Cek jika halaman adalah landing page
+    if (!$('body').hasClass('landing-page-body')) {
+        return;
+    }
+    
+    // Intersection Observer untuk fade-in animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                const element = entry.target;
+                const delay = element.getAttribute('data-delay') || 0;
+                
+                setTimeout(function() {
+                    element.classList.add('visible');
+                }, delay);
+                
+                // Unobserve setelah animasi trigger untuk performance
+                observer.unobserve(element);
+            }
+        });
+    }, observerOptions);
+    
+    // Observe semua elements dengan class fade-in
+    const animatedElements = document.querySelectorAll('.fade-in-up, .fade-in-left, .fade-in-right');
+    animatedElements.forEach(function(element) {
+        observer.observe(element);
+    });
+    
+    // Trigger hero animation immediately (tanpa scroll)
+    const heroContent = document.querySelector('.hero-content');
+    if (heroContent) {
+        setTimeout(function() {
+            heroContent.classList.add('visible');
+        }, 100);
+    }
+    
+    const heroImage = document.querySelector('.hero-image');
+    if (heroImage) {
+        setTimeout(function() {
+            heroImage.classList.add('visible');
+        }, 300);
+    }
+}

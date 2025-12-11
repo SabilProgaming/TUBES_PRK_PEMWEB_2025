@@ -85,13 +85,13 @@ $role_title = isset($role_display[$current_role]) ? $role_display[$current_role]
                 <?php endif; ?>
             </ul>
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                <li class="nav-item dropdown" style="position: relative; z-index: 1050;">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer; pointer-events: auto;">
                         <i class="fas fa-user-circle me-1"></i>
                         <strong><?php echo htmlspecialchars($current_nama); ?></strong>
                         <small class="text-light ms-2">(<?php echo $role_title; ?>)</small>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="z-index: 1051;">
                         <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="../logout.php">

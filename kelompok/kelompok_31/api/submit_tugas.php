@@ -80,15 +80,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
     if(move_uploaded_file($_FILES['file']['tmp_name'], "../uploads/tugas/".$file)) {
         try {
+            // Cek apakah tugas ada dan valid
+            $cekTugas = $pdo->prepare("SELECT id, created_by FROM tugas WHERE id = ?");
+            $cekTugas->execute([$tid]);
+            $tugasData = $cekTugas->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$tugasData) {
+                // Hapus file jika tugas tidak ditemukan
+                if (file_exists("../uploads/tugas/".$file)) {
+                    unlink("../uploads/tugas/".$file);
+                }
+                http_response_code(404);
+                echo json_encode(['status'=>'error', 'message'=>'Tugas tidak ditemukan']);
+                exit;
+            }
+            
+            // Cek apakah submission sudah ada
             $cek = $pdo->prepare("SELECT id FROM submission WHERE tugas_id=? AND mahasiswa_id=?");
             $cek->execute([$tid, $mhs_id]);
             
             if($cek->rowCount() > 0) {
                 // Update existing submission
-                $pdo->prepare("UPDATE submission SET file_path=?, file_name=?, file_size=?, submitted_at=NOW() WHERE tugas_id=? AND mahasiswa_id=?")->execute([$file, $file_name, $file_size, $tid, $mhs_id]);
+                $updateStmt = $pdo->prepare("UPDATE submission SET file_path=?, file_name=?, file_size=?, submitted_at=NOW() WHERE tugas_id=? AND mahasiswa_id=?");
+                $updateStmt->execute([$file, $file_name, $file_size, $tid, $mhs_id]);
+                error_log("Submission updated - Tugas ID: $tid, Mahasiswa ID: $mhs_id");
             } else {
                 // Insert new submission
-                $pdo->prepare("INSERT INTO submission (tugas_id, mahasiswa_id, file_path, file_name, file_size) VALUES (?,?,?,?,?)")->execute([$tid, $mhs_id, $file, $file_name, $file_size]);
+                $insertStmt = $pdo->prepare("INSERT INTO submission (tugas_id, mahasiswa_id, file_path, file_name, file_size) VALUES (?,?,?,?,?)");
+                $insertStmt->execute([$tid, $mhs_id, $file, $file_name, $file_size]);
+                error_log("Submission created - Tugas ID: $tid, Mahasiswa ID: $mhs_id, Submission ID: " . $pdo->lastInsertId());
             }
             echo json_encode(['status'=>'success', 'message'=>'Jawaban berhasil dikirim!']);
         } catch (PDOException $e) {
@@ -97,8 +117,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unlink("../uploads/tugas/".$file);
             }
             error_log("Error submitting tugas: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             http_response_code(500);
-            echo json_encode(['status'=>'error', 'message'=>'Gagal menyimpan data ke database']);
+            echo json_encode(['status'=>'error', 'message'=>'Gagal menyimpan data ke database: ' . $e->getMessage()]);
         }
     } else { 
         echo json_encode(['status'=>'error', 'message'=>'Gagal upload ke server.']); 

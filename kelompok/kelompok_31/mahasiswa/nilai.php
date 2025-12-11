@@ -115,52 +115,73 @@ include '../components/navbar.php';
     </div>
 </div>
 
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 const API = '../api/nilai.php';
 
-$(document).ready(function() {
+// Auto-load data saat halaman dibuka
+document.addEventListener('DOMContentLoaded', function() {
     loadData();
 });
 
+// Juga support jQuery jika sudah ada
+if (typeof jQuery !== 'undefined') {
+    jQuery(document).ready(function($) {
+        loadData();
+    });
+}
+
 // Load data nilai
 function loadData() {
-    $('#loadingSpinner').show();
-    $('#daftarNilai').html('');
-    $('#emptyState').hide();
-    $('#statistikContainer').html('');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const daftarNilai = document.getElementById('daftarNilai');
+    const emptyState = document.getElementById('emptyState');
+    const statistikContainer = document.getElementById('statistikContainer');
     
-    $.ajax({
-        url: API,
-        method: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            $('#loadingSpinner').hide();
+    if (loadingSpinner) loadingSpinner.style.display = 'block';
+    if (daftarNilai) daftarNilai.innerHTML = '';
+    if (emptyState) emptyState.style.display = 'none';
+    if (statistikContainer) statistikContainer.innerHTML = '';
+    
+    fetch(API)
+        .then(response => response.json())
+        .then(data => {
+            if (loadingSpinner) loadingSpinner.style.display = 'none';
             
-            if (response.status === 'success' && response.data.length > 0) {
-                renderStatistik(response.data);
-                renderNilai(response.data);
+            console.log('Response dari API Nilai:', data);
+            
+            if (data.status === 'success') {
+                if (data.data && data.data.length > 0) {
+                    console.log('Data nilai ditemukan:', data.data.length, 'item');
+                    renderStatistik(data.data);
+                    renderNilai(data.data);
+                } else {
+                    console.log('Tidak ada data nilai');
+                    if (emptyState) emptyState.style.display = 'block';
+                }
             } else {
-                $('#emptyState').show();
+                console.error('Response error:', data);
+                if (emptyState) emptyState.style.display = 'block';
             }
-        },
-        error: function(xhr) {
-            $('#loadingSpinner').hide();
-            let errorMsg = 'Gagal memuat data';
-            try {
-                const response = JSON.parse(xhr.responseText);
-                errorMsg = response.message || errorMsg;
-            } catch(e) {}
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (loadingSpinner) loadingSpinner.style.display = 'none';
             
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: errorMsg
-            });
-        }
-    });
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Gagal memuat data: ' + error.message
+                });
+            } else {
+                alert('Gagal memuat data: ' + error.message);
+            }
+        });
 }
 
 // Render statistik
@@ -214,7 +235,10 @@ function renderStatistik(data) {
         </div>
     `;
     
-    $('#statistikContainer').html(html);
+    const statistikContainer = document.getElementById('statistikContainer');
+    if (statistikContainer) {
+        statistikContainer.innerHTML = html;
+    }
 }
 
 // Render daftar nilai
@@ -258,7 +282,10 @@ function renderNilai(data) {
         });
     }
     
-    $('#daftarNilai').html(html);
+    const daftarNilai = document.getElementById('daftarNilai');
+    if (daftarNilai) {
+        daftarNilai.innerHTML = html;
+    }
 }
 
 // Show detail nilai
@@ -271,24 +298,26 @@ function showDetail(id, judul, mk, tanggal, fileName, filePath, nilai, feedback)
         minute: '2-digit'
     });
     
-    $('#detailJudul').text(judul);
-    $('#detailMataKuliah').text(mk);
-    $('#detailTanggal').text(tanggalFormatted);
-    $('#detailFile').html(`
+    document.getElementById('detailJudul').textContent = judul;
+    document.getElementById('detailMataKuliah').textContent = mk;
+    document.getElementById('detailTanggal').textContent = tanggalFormatted;
+    document.getElementById('detailFile').innerHTML = `
         <a href="../uploads/tugas/${escapeHtml(filePath)}" target="_blank" class="btn btn-sm btn-outline-primary">
             <i class="fas fa-download me-1"></i>${escapeHtml(fileName)}
         </a>
-    `);
+    `;
     
-    if (nilai !== null) {
-        $('#detailNilai').text(nilai);
-        $('#detailFeedback').html(feedback || '<em class="text-muted">Tidak ada feedback</em>');
+    if (nilai !== null && nilai !== 'null') {
+        document.getElementById('detailNilai').textContent = nilai;
+        document.getElementById('detailFeedback').innerHTML = feedback || '<em class="text-muted">Tidak ada feedback</em>';
     } else {
-        $('#detailNilai').html('<span class="badge bg-secondary">Belum dinilai</span>');
-        $('#detailFeedback').html('<em class="text-muted">Nilai belum diberikan oleh dosen</em>');
+        document.getElementById('detailNilai').innerHTML = '<span class="badge bg-secondary">Belum dinilai</span>';
+        document.getElementById('detailFeedback').innerHTML = '<em class="text-muted">Nilai belum diberikan oleh dosen</em>';
     }
     
-    $('#detailNilaiModal').modal('show');
+    // Show modal menggunakan Bootstrap
+    const modal = new bootstrap.Modal(document.getElementById('detailNilaiModal'));
+    modal.show();
 }
 
 // Escape HTML

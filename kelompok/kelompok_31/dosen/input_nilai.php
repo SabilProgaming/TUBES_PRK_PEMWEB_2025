@@ -141,61 +141,92 @@ include '../components/navbar.php';
     </div>
 </div>
 
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 const API = '../api/input_nilai.php';
 
-$(document).ready(function() {
+// Auto-load data saat halaman dibuka
+document.addEventListener('DOMContentLoaded', function() {
     loadData();
     
-    $('#filterMataKuliah, #filterStatus').change(function() {
+    // Event listener untuk filter
+    document.getElementById('filterMataKuliah').addEventListener('change', function() {
+        loadData();
+    });
+    
+    document.getElementById('filterStatus').addEventListener('change', function() {
         loadData();
     });
 });
 
+// Juga support jQuery jika sudah ada
+if (typeof jQuery !== 'undefined') {
+    jQuery(document).ready(function($) {
+        loadData();
+        
+        $('#filterMataKuliah, #filterStatus').on('change', function() {
+            loadData();
+        });
+    });
+}
+
 // Load data submission
 function loadData() {
-    const mkId = $('#filterMataKuliah').val();
-    const status = $('#filterStatus').val();
+    const mkId = document.getElementById('filterMataKuliah') ? document.getElementById('filterMataKuliah').value : '';
+    const status = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : '';
     
-    $('#loadingSpinner').show();
-    $('#daftarSubmission').html('');
-    $('#emptyState').hide();
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const daftarSubmission = document.getElementById('daftarSubmission');
+    const emptyState = document.getElementById('emptyState');
     
-    $.ajax({
-        url: API,
-        method: 'GET',
-        data: {
-            mata_kuliah_id: mkId,
-            status: status
-        },
-        dataType: 'json',
-        success: function(response) {
-            $('#loadingSpinner').hide();
+    if (loadingSpinner) loadingSpinner.style.display = 'block';
+    if (daftarSubmission) daftarSubmission.innerHTML = '';
+    if (emptyState) emptyState.style.display = 'none';
+    
+    // Build URL dengan query parameters
+    let url = API + '?';
+    if (mkId) url += 'mata_kuliah_id=' + encodeURIComponent(mkId) + '&';
+    if (status) url += 'status=' + encodeURIComponent(status) + '&';
+    url = url.replace(/[&?]$/, ''); // Remove trailing & or ?
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (loadingSpinner) loadingSpinner.style.display = 'none';
             
-            if (response.status === 'success' && response.data.length > 0) {
-                renderSubmission(response.data);
+            console.log('Response dari API:', data);
+            
+            if (data.status === 'success') {
+                if (data.data && data.data.length > 0) {
+                    console.log('Data submission ditemukan:', data.data.length, 'item');
+                    renderSubmission(data.data);
+                } else {
+                    console.log('Tidak ada data submission');
+                    if (emptyState) emptyState.style.display = 'block';
+                }
             } else {
-                $('#emptyState').show();
+                console.error('Response error:', data);
+                if (emptyState) emptyState.style.display = 'block';
             }
-        },
-        error: function(xhr) {
-            $('#loadingSpinner').hide();
-            let errorMsg = 'Gagal memuat data';
-            try {
-                const response = JSON.parse(xhr.responseText);
-                errorMsg = response.message || errorMsg;
-            } catch(e) {}
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (loadingSpinner) loadingSpinner.style.display = 'none';
             
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: errorMsg
-            });
-        }
-    });
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Gagal memuat data: ' + error.message
+                });
+            } else {
+                alert('Gagal memuat data: ' + error.message);
+            }
+        });
 }
 
 // Render daftar submission
@@ -258,87 +289,118 @@ function renderSubmission(data) {
         `;
     });
     
-    $('#daftarSubmission').html(html);
+    const daftarSubmission = document.getElementById('daftarSubmission');
+    if (daftarSubmission) {
+        daftarSubmission.innerHTML = html;
+    }
 }
 
 // Open modal input nilai
 function openInputNilai(id, nama, judul, fileName, filePath, nilai, feedback) {
-    $('#submissionId').val(id);
-    $('#mahasiswaNama').val(nama);
-    $('#tugasJudul').val(judul);
-    $('#fileSubmission').html(`
+    document.getElementById('submissionId').value = id;
+    document.getElementById('mahasiswaNama').value = nama;
+    document.getElementById('tugasJudul').value = judul;
+    document.getElementById('fileSubmission').innerHTML = `
         <a href="../uploads/tugas/${escapeHtml(filePath)}" target="_blank" class="btn btn-sm btn-outline-primary">
             <i class="fas fa-download me-1"></i>Download: ${escapeHtml(fileName)}
         </a>
-    `);
-    $('#nilai').val(nilai || '');
-    $('#feedback').val(feedback || '');
-    $('#inputNilaiModal').modal('show');
+    `;
+    document.getElementById('nilai').value = nilai || '';
+    document.getElementById('feedback').value = feedback || '';
+    
+    // Show modal menggunakan Bootstrap
+    const modal = new bootstrap.Modal(document.getElementById('inputNilaiModal'));
+    modal.show();
 }
 
 // Save nilai
 function saveNilai() {
-    const formData = {
-        submission_id: $('#submissionId').val(),
-        nilai: parseFloat($('#nilai').val()),
-        feedback: $('#feedback').val().trim()
-    };
+    const submissionId = document.getElementById('submissionId').value;
+    const nilai = parseFloat(document.getElementById('nilai').value);
+    const feedback = document.getElementById('feedback').value.trim();
     
     // Validasi
-    if (!formData.nilai || formData.nilai < 0 || formData.nilai > 100) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Validasi',
-            text: 'Nilai harus antara 0-100'
-        });
+    if (!nilai || nilai < 0 || nilai > 100) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Validasi',
+                text: 'Nilai harus antara 0-100'
+            });
+        } else {
+            alert('Nilai harus antara 0-100');
+        }
         return;
     }
     
-    const btn = $('button[onclick="saveNilai()"]');
-    const originalText = btn.html();
-    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...');
+    const formData = {
+        submission_id: parseInt(submissionId),
+        nilai: nilai,
+        feedback: feedback
+    };
     
-    $.ajax({
-        url: API,
+    const btn = document.querySelector('button[onclick="saveNilai()"]');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+    
+    fetch(API, {
         method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(formData),
-        dataType: 'json',
-        success: function(response) {
-            if (response.status === 'success') {
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil',
-                    text: response.message,
+                    text: data.message,
                     timer: 1500,
                     showConfirmButton: false
                 });
-                $('#inputNilaiModal').modal('hide');
-                loadData();
             } else {
+                alert('Nilai berhasil disimpan');
+            }
+            
+            // Tutup modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('inputNilaiModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // Reload data
+            loadData();
+        } else {
+            if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: response.message || 'Gagal menyimpan nilai'
+                    text: data.message || 'Gagal menyimpan nilai'
                 });
+            } else {
+                alert('Error: ' + (data.message || 'Gagal menyimpan nilai'));
             }
-        },
-        error: function(xhr) {
-            let errorMsg = 'Gagal menyimpan nilai';
-            try {
-                const response = JSON.parse(xhr.responseText);
-                errorMsg = response.message || errorMsg;
-            } catch(e) {}
-            
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        if (typeof Swal !== 'undefined') {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: errorMsg
+                text: 'Gagal menyimpan nilai: ' + error.message
             });
-        },
-        complete: function() {
-            btn.prop('disabled', false).html(originalText);
+        } else {
+            alert('Gagal menyimpan nilai: ' + error.message);
         }
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     });
 }
 

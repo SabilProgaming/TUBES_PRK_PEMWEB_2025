@@ -40,6 +40,11 @@ $role_title = isset($role_display[$current_role]) ? $role_display[$current_role]
                             <i class="fas fa-bullhorn me-1"></i>Pengumuman
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../admin/users.php">
+                            <i class="fas fa-users me-1"></i>Users
+                        </a>
+                    </li>
                 <?php elseif ($current_role == 'dosen'): ?>
                     <li class="nav-item">
                         <a class="nav-link" href="../dashboard/dosen.php">
